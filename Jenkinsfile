@@ -1,82 +1,43 @@
 pipeline {
-    agent { 
-        docker { 
-            image 'golang:1.22-alpine' 
-            args '-v ${WORKSPACE}:/go/src/devops_pr --user root'
-        } 
-    }
-
+    agent any
     environment {
-        GO111MODULE = 'on'
-        GOCACHE = "/go/src/devops_pr/.cache/go-build"
+      PROJECT_NAME = "pr7"
+      OWNER_NAME   = "Lapin"
     }
 
-    triggers {
-        githubPush()
-    }
-    
     stages {
-
-        stage('Checkout') {
+        stage('1-Build') {
             steps {
-                // Check code from SCM (Git) for all branches
-                checkout([$class: 'GitSCM', 
-                          branches: [[name: '**']], 
-                          userRemoteConfigs: [[
-                              url: 'git@github.com:JustNik8/devops_pr.git',
-                              credentialsId: 'github-ssh-key'
-                          ]]])
+                echo "Start of Stage Build..."
+                echo "Building......."
+                echo "End of Stage Build..."
             }
         }
-
-        stage('Check Go Environment') {
+        stage('2-Test') {
             steps {
-                sh 'go version'
+                echo "Start of Stage Test..."
+                echo "Testing......."
+                echo "Privet ${PROJECT_NAME}"
+                echo "Owner is ${OWNER_NAME}"
+                echo "End of Stage Build..."
             }
         }
-
-        stage('Prepare Environment') {
+        stage('3-Deploy') {
             steps {
-                script {
-                    // Create dir for cache if it doesn't exist
-                    sh '''
-                        mkdir -p /go/src/devops_pr/.cache/go-build
-                        apk add --no-cache curl git
-                        curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.54.2
-                        git config --global --add safe.directory .
-                    '''
-                }
+                echo "Start of Stage Deploy..."
+                echo "Deploying......."
+                sh "ls -la"
+                sh '''
+                   echo "Line1"
+                   echo "Line2"
+                '''
+                echo "End of Stage Build..."
             }
         }
-
-        stage('Lint') {
+        stage('4-Celebrate') {
             steps {
-                script {
-                    sh '''
-                    golangci-lint run -v ./...
-                    '''
-                }
+                echo "SUCCESS!"
             }
-        }
-
-        stage('Build') {
-            steps {
-                script {
-                    sh '''
-                    go mod tidy
-                    go build -o devops_pr -v ./cmd/web
-                    '''
-                }
-            }
-        }
-
-        stage('Test') {
-            steps {
-                script {
-                    sh 'go test ./...'
-                }
-            }
-        }
-
+        }	
     }
 }
